@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximum Flow Algorithm</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .path-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .path-color {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .path-name {
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="form-container">
+            <h1>Maximum Flow Algorithm</h1>
+             <div class="wrapper">
+                <div class="location">
+                    <input type="text" id="startSearch" placeholder="Search start location" onkeyup="filterNames('start')">
+                    <select id="start" name="start">
+                        <option value="-1" selected>Please choose start location</option>
+                    </select>
+    
+                    <input type="text" id="destinationSearch" placeholder="Search destination location" onkeyup="filterNames('destination')">
+                    <select id="destination" name="destination">
+                        <option value="-1" selected>Please choose destination location</option>
+                    </select>
+                </div>
+
+                <div class="utils">
+                    <select id="algorithm" name="algorithm">
+                        <option value="-1" selected>Please choose a algorithm</option>
+                    </select>
+
+                    <div class="button">
+                        <button onclick="getMap()">Find Path</button>
+                        <button onclick="getMap(1)">Reset Map</button>
+                    </div>
+                    
+                    <div class="data">
+                        <span id="max_flow">Maximum Flow: 0 Vehicles/Hour</span>
+                        <br>
+                        <span id="time">Runtime: 0 Seconds</span>
+                    </div>
+                </div>
+            </div>
+            <div id="path-container"></div>
+        </div>
+
+        <div id="map-container">
+            <iframe id="map-frame" src="static/default_map.html" width="100%" height="100%" style="border: none;" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+/static/default_map.html
+/maps/
+/database/*
+!database/convert_dataset.ipynb
+__pycache__/

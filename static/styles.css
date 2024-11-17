@@ -1,0 +1,83 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    position: relative;
+    height: 100vh;
+}
+
+.form-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    margin: 0.85rem 14rem 14rem;
+    padding: 6px 10px 0 10px;
+    background-color: #07080778;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px;
+}
+
+.form-container h1,
+.form-container span {
+    color: aliceblue;
+}
+
+.form-container .button {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+}
+
+.form-container .button button {
+    width: 90px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    outline: none;
+}
+.form-container .location {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-container .wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+    padding-top: 10px;
+}
+
+.form-container .location select,
+.form-container .wrapper .utils select {
+    width: max-content;
+    margin: 0 0 10px 0;
+    padding: 4px 6px;
+    word-wrap: break-word;
+    white-space: normal;
+    border-radius: 6px;
+}
+
+.form-container .location input,
+.form-container .wrapper .utils input {
+    margin: 0 0 10px 0;
+    padding: 4px 6px;
+    word-wrap: break-word;
+    white-space: normal;
+    border-radius: 6px;
+}
+
+#map-container {
+    height: 100vh;
+}
