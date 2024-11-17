@@ -1,5 +1,7 @@
 /static/default_map.html
-/maps/
+/maps/*
+!maps/.gitkeep
 /database/*
 !database/convert_dataset.ipynb
+!database/maximum_flow_data.pickle
 __pycache__/

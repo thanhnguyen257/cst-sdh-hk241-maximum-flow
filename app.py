@@ -1,5 +1,4 @@
 from flask import Flask, render_template, send_from_directory, jsonify, request
-import pandas as pd
 import folium
 from folium.plugins import PolyLineTextPath
 import pickle
