@@ -6,26 +6,26 @@ def ford_fulkerson(adj_matrix, source, sink):
     max_flow = 0
     paths = []
 
-    def bfs():
-        """Breadth-First Search to find a path with available capacity."""
+    def dfs():
+        """Depth-First Search to find a path with available capacity."""
         parent = [-1] * n
         visited = [False] * n
-        queue = deque([source])
+        stack = [source]  # Use a stack for DFS
         visited[source] = True
 
-        while queue:
-            u = queue.popleft()
+        while stack:
+            u = stack.pop()
             for v in range(n):
                 if not visited[v] and residual[u][v] > 0:  # Residual capacity exists
                     parent[v] = u
                     visited[v] = True
                     if v == sink:
                         return parent
-                    queue.append(v)
+                    stack.append(v)
         return None
 
     while True:
-        parent = bfs()
+        parent = dfs()
         if not parent:  # No augmenting path found
             break
 
