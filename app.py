@@ -38,7 +38,7 @@ def draw_map(map_type, nodes=None, edges=None):
         #     folium.PolyLine(edge_dict[edge_id]['node_coordinate'], color="blue", weight=10, opacity=0.7).add_to(map_instance)
 
         map_instance.save("static/default_map.html")
-    elif map_type == "edmond_karp" and edges is not None:
+    elif map_type != "default" and edges is not None:
 
         def generate_random_color(number_of_path):
             colors = set()
@@ -160,31 +160,6 @@ def draw_map(map_type, nodes=None, edges=None):
             popup = folium.Popup(popup_str, max_width=300)
             line.add_child(popup)
 
-    elif map_type == "push_relabel" and edges is not None:
-        color_path = {0:'#FFFFFF'}
-        for edge in edges:
-            edge_color = "#FF0000" if edges[edge] == edge_dict[edge]['weight'] else "#0E53FE"\
-
-            line = folium.PolyLine(edge_dict[edge]['node_coordinate']
-                                , color=edge_color
-                                , weight=10
-                                , opacity=0.7).add_to(map_instance)
-            
-            arrows = PolyLineTextPath(
-                line,
-                '   ➤   ',
-                repeat=True,
-                offset=0,
-                attributes={'fill':edge_color
-                            , 'font-size':'30'}
-            )
-            map_instance.add_child(arrows)
-
-            popup_str = f"{edge_dict[edge]['name']}:{edge_dict[edge]['weight']}"
-            popup_str += f"<br>Path Full: {edges[edge]}"
-            popup = folium.Popup(popup_str, max_width=300)
-            line.add_child(popup)
-
     map_instance.save("maps/map_full.html")
 
 draw_map(map_type="default")
@@ -198,7 +173,7 @@ def get_options():
     data = {
         'start': [node_dict[i]['name'] for i in range(len(node_dict))],
         'destination': [node_dict[i]['name'] for i in range(len(node_dict))],
-        'algorithm': ['Push–relabel','Edmonds–Karp','Ford–Fulkerson']
+        'algorithm': ['Push–Relabel','Edmonds–Karp','Ford–Fulkerson']
     }
     return jsonify(data)
 
@@ -224,10 +199,8 @@ def get_map():
         pushrelabel = PushRelabel(len(capacity_matrix), start, destination, capacity_matrix)
         start_time = time.perf_counter()
         flow =  pushrelabel.max_flow()
+        max_flow, paths = pushrelabel.edmonds_karp(flow, start, destination)
         end_time = time.perf_counter()
-        max_flow = sum(flow[start][v] for v in range(len(capacity_matrix)))
-        paths = pushrelabel.edmonds_karp(flow, start, destination)
-
     elif algorithm == "1":
         map_type = "edmond_karp"
         edmonds_karp = EdmondsKarp()
@@ -237,9 +210,8 @@ def get_map():
     elif algorithm == "2":
         map_type = "ford_fulkerson"
         start_time = time.perf_counter()
+        max_flow, paths = 0, None
         end_time = time.perf_counter()
-        max_flow = None
-        paths = None
     
     maximum_flow = max_flow
     runtime = end_time - start_time

@@ -115,7 +115,7 @@ class PushRelabel:
         return self.flow
     
     """Apply BFS in graph"""
-    def bfs(graph, source, sink, parent):
+    def bfs(self, graph, source, sink, parent):
         visited = [False] * len(graph)  #all vertices are not visited
         queue = deque([source])
         visited[source] = True  #visit <source>
@@ -134,7 +134,7 @@ class PushRelabel:
         return False
 
     """trace back and get path found by BFS"""
-    def get_path(parent, source, sink):
+    def get_path(self, parent, source, sink):
         path = []
         v = sink
         while v != source:
@@ -144,7 +144,7 @@ class PushRelabel:
         path.reverse()           #reverse to get the path from source to sink
         return path
 
-    def edmonds_karp(capacity_matrix, source, sink):
+    def edmonds_karp(self, capacity_matrix, source, sink):
         n = len(capacity_matrix)
         graph = [row[:] for row in capacity_matrix]    #Initial residual graph is the same as capacity matrix
         parent = [-1] * n                              #store parent to trace back
@@ -152,7 +152,7 @@ class PushRelabel:
         paths = []                                     #store paths
 
         #Increase the flow while there is a path from source to sink
-        while bfs(graph, source, sink, parent):
+        while self.bfs(graph, source, sink, parent):
             # Find the maximum flow through the path by using BFS
             path_flow = float(-1)
             v = sink
@@ -173,7 +173,7 @@ class PushRelabel:
             #Increase maxflow with the path_flow
             max_flow += path_flow
 
-            path = get_path(parent, source, sink)
+            path = self.get_path(parent, source, sink)
             paths.append((path, path_flow))    #Store path and its bottleneck flow
 
         return max_flow, paths
