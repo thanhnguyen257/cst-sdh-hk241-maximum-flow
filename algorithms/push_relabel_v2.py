@@ -4,70 +4,6 @@ import heapq
 
 dict_map = {} # Từ điển ma trận nếu xài edges
 
-"""Apply BFS in graph"""
-def bfs(graph, source, sink, parent):
-    visited = [False] * len(graph)  #all vertices are not visited
-    queue = deque([source])
-    visited[source] = True  #visit <source>
-
-    while queue:
-        u = queue.popleft()                      #pick vertex = u from queue
-
-        for v, capacity in enumerate(graph[u]):  #check neighbor of u -> vertex v and edge capacity
-            if not visited[v] and capacity > 0:  #not visited -> available capacity
-                queue.append(v)                  #add v to queue
-                visited[v] = True                #check visit vertex v
-                parent[v] = u                    #set parent of v is u
-                if v == sink:                    #Reach the sink -< full path -> return True
-                    return True
-
-    return False
-
-"""trace back and get path found by BFS"""
-def get_path(parent, source, sink):
-    path = []
-    v = sink
-    while v != source:
-        u = parent[v]
-        path.append((u, v))  #store edge as (u, v)
-        v = u
-    path.reverse()           #reverse to get the path from source to sink
-    return path
-
-def edmonds_karp(capacity_matrix, source, sink):
-    n = len(capacity_matrix)
-    graph = [row[:] for row in capacity_matrix]    #Initial residual graph is the same as capacity matrix
-    parent = [-1] * n                              #store parent to trace back
-    max_flow = 0
-    paths = []                                     #store paths
-
-    #Increase the flow while there is a path from source to sink
-    while bfs(graph, source, sink, parent):
-        # Find the maximum flow through the path by using BFS
-        path_flow = float(-1)
-        v = sink
-        while v != source:
-            u = parent[v]
-            if (path_flow < 0): path_flow = graph[u][v]
-            else: path_flow = min(path_flow, graph[u][v])    #find bottleneck capacity
-            v = u
-
-        # Update residual capacities of the edges and reverse edges along the path
-        v = sink
-        while v != source:
-            u = parent[v]
-            graph[u][v] -= path_flow      #Decrease flow in forward path
-            graph[v][u] += path_flow      #Increase flow in backward path
-            v = u
-
-        #Increase maxflow with the path_flow
-        max_flow += path_flow
-
-        path = get_path(parent, source, sink)
-        paths.append((path, path_flow))    #Store path and its bottleneck flow
-
-    return max_flow, paths
-
 def convert_edges_to_matrix(edges):
     """Chuyển đổi danh sách các cạnh thành ma trận kề"""
     # Xây dựng từ điển
@@ -177,6 +113,70 @@ class PushRelabel:
                 i += 1
         
         return self.flow
+    
+    """Apply BFS in graph"""
+    def bfs(graph, source, sink, parent):
+        visited = [False] * len(graph)  #all vertices are not visited
+        queue = deque([source])
+        visited[source] = True  #visit <source>
+
+        while queue:
+            u = queue.popleft()                      #pick vertex = u from queue
+
+            for v, capacity in enumerate(graph[u]):  #check neighbor of u -> vertex v and edge capacity
+                if not visited[v] and capacity > 0:  #not visited -> available capacity
+                    queue.append(v)                  #add v to queue
+                    visited[v] = True                #check visit vertex v
+                    parent[v] = u                    #set parent of v is u
+                    if v == sink:                    #Reach the sink -< full path -> return True
+                        return True
+
+        return False
+
+    """trace back and get path found by BFS"""
+    def get_path(parent, source, sink):
+        path = []
+        v = sink
+        while v != source:
+            u = parent[v]
+            path.append((u, v))  #store edge as (u, v)
+            v = u
+        path.reverse()           #reverse to get the path from source to sink
+        return path
+
+    def edmonds_karp(capacity_matrix, source, sink):
+        n = len(capacity_matrix)
+        graph = [row[:] for row in capacity_matrix]    #Initial residual graph is the same as capacity matrix
+        parent = [-1] * n                              #store parent to trace back
+        max_flow = 0
+        paths = []                                     #store paths
+
+        #Increase the flow while there is a path from source to sink
+        while bfs(graph, source, sink, parent):
+            # Find the maximum flow through the path by using BFS
+            path_flow = float(-1)
+            v = sink
+            while v != source:
+                u = parent[v]
+                if (path_flow < 0): path_flow = graph[u][v]
+                else: path_flow = min(path_flow, graph[u][v])    #find bottleneck capacity
+                v = u
+
+            # Update residual capacities of the edges and reverse edges along the path
+            v = sink
+            while v != source:
+                u = parent[v]
+                graph[u][v] -= path_flow      #Decrease flow in forward path
+                graph[v][u] += path_flow      #Increase flow in backward path
+                v = u
+
+            #Increase maxflow with the path_flow
+            max_flow += path_flow
+
+            path = get_path(parent, source, sink)
+            paths.append((path, path_flow))    #Store path and its bottleneck flow
+
+        return max_flow, paths
 
 if __name__ == '__main__':
     # Số đỉnh
@@ -242,7 +242,7 @@ if __name__ == '__main__':
     print("Flow edges: ", convert_matrix_to_edges(flow))
     
     # Tìm các đường đi
-    max_flow, paths = edmonds_karp(flow, source, sink)
+    max_flow, paths = pr.edmonds_karp(flow, source, sink)
 
     print("\nAugmenting paths found:")
     for i, (path, flow) in enumerate(paths, 1):

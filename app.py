@@ -226,11 +226,7 @@ def get_map():
         flow =  pushrelabel.max_flow()
         end_time = time.perf_counter()
         max_flow = sum(flow[start][v] for v in range(len(capacity_matrix)))
-        paths = dict()
-        for i in range(len(flow)):
-            for j in range(len(flow)):
-                if flow[i][j] > 0:
-                    paths[(i, j)] = flow[i][j]
+        paths = pushrelabel.edmonds_karp(flow, start, destination)
 
     elif algorithm == "1":
         map_type = "edmond_karp"
