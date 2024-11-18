@@ -1,8 +1,8 @@
-from collections import deque, defaultdict
-
+from collections import deque
+import copy
 def ford_fulkerson(adj_matrix, source, sink):
     n = len(adj_matrix)
-    residual = [row[:] for row in adj_matrix]
+    residual = copy.deepcopy(adj_matrix)
     max_flow = 0
     paths = []
 
@@ -16,7 +16,7 @@ def ford_fulkerson(adj_matrix, source, sink):
         while stack:
             u = stack.pop()
             for v in range(n):
-                if not visited[v] and residual[u][v] > 0:  # Residual capacity exists
+                if not visited[v] and residual[u][v] > 0:  # Capacity exists
                     parent[v] = u
                     visited[v] = True
                     if v == sink:
@@ -35,8 +35,9 @@ def ford_fulkerson(adj_matrix, source, sink):
         path = []
         while v != source:
             u = parent[v]
-            path_flow = min(path_flow, residual[u][v])
-            path.insert(0, (u, v))
+            if adj_matrix[u][v] > 0:
+                path_flow = min(path_flow, residual[u][v])
+                path.insert(0, (u, v))
             v = u
 
         # Update residual graph
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     ]
 
     source = 1
-    sink = 3
+    sink = 5
 
     max_flow, paths = ford_fulkerson(adj_matrix, source, sink)
     print("max_flow", max_flow)
