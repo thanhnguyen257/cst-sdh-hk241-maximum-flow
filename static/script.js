@@ -47,9 +47,6 @@ function populateOptions() {
                 opt.value = idx++;
                 algorithmSelect.appendChild(opt);
             });
-            document.getElementById('start').value = 2;
-            document.getElementById('destination').value = 1;
-            document.getElementById('algorithm').value = 1;
         });
 }
 window.onload = populateOptions;
@@ -59,26 +56,41 @@ async function getMap(reset) {
         window.location.reload();
         return;
     }
-    const start = document.getElementById('start').value;
-    const destination = document.getElementById('destination').value;
-    const algorithm = document.getElementById('algorithm').value;
+    const runButton = document.getElementById('run-button');
+    const spinner = document.getElementById('loading-spinner');
 
-    if (start === "-1" || destination === "-1" || algorithm === "-1") {
-        alert('Please select locaions and algorithm.');
-        return;
-    }
+    runButton.disabled = true;
+    spinner.style.display = "block";
 
     try {
+        const start = document.getElementById('start')?.value;
+        const destination = document.getElementById('destination')?.value;
+        const algorithm = document.getElementById('algorithm')?.value;
+
+        if (!start || start === "-1" || 
+            !destination || destination === "-1" || 
+            !algorithm || algorithm === "-1") {
+            alert('Please select locations and algorithm.');
+            return;
+        }
+
+        const mapFrame = document.getElementById('map-frame');
+        mapFrame.src = `/get_map?start=${start}&destination=${destination}&algorithm=${algorithm}`;
+
+        await new Promise((resolve) => {
+            mapFrame.onload = resolve;
+        });
+
         const response = await fetch('/get_data');
         const data = await response.json();
-        
-        document.getElementById("max_flow").textContent = "Maximum Flow: "+data.max_flow+" Vehicles/Hour";
-        document.getElementById("time").textContent = "Runtime: "+data.runtime+" Seconds";
+
+        document.getElementById("max_flow").textContent = "Maximum Flow: " + data.max_flow + " Vehicles/Hour";
+        document.getElementById("time").textContent = "Runtime: " + data.runtime + " Seconds";
 
         const pathContainer = document.getElementById('path-container');
         pathContainer.innerHTML = "";
-        const sorted_path = Object.keys(data.color_path).sort((a, b) => a - b);
-        sorted_path.forEach(([path, color]) => {
+        const sortedPath = Object.keys(data.color_path).sort((a, b) => a - b);
+        sortedPath.forEach(path => {
             const boxContainer = document.createElement('div');
             boxContainer.className = 'path-container';
             boxContainer.style.margin = '0';
@@ -87,9 +99,9 @@ async function getMap(reset) {
             pathColor.className = 'path-color';
             pathColor.style.backgroundColor = data.color_path[path];
             pathColor.style.width = '20px';
-            pathColor.style.height = '20px';;
+            pathColor.style.height = '20px';
             pathColor.style.borderRadius = '50%';
-            pathColor.onclick = getMap_static(path);
+            pathColor.onclick = () => getMap_static(path);
 
             const pathName = document.createElement('span');
             pathName.className = 'path-name';
@@ -105,15 +117,15 @@ async function getMap(reset) {
             boxContainer.appendChild(pathName);
             pathContainer.appendChild(boxContainer);
         });
-        
-        document.getElementById('map-frame').src = `/get_map?start=${start}&destination=${destination}&algorithm=${algorithm}`;
     } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error:', error);
+    } finally {
+        runButton.disabled = false;
+        spinner.style.display = "none";
     }
 }
 
-// async function getMap_static(map_id) {
-function getMap_static(map_id) {
+async function getMap_static(map_id) {
     document.getElementById('map-frame').src = `/get_map?map_id=${map_id}`;
 }
 

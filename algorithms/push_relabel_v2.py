@@ -1,8 +1,76 @@
+from collections import deque
 import random
+import heapq
 
-dict_map = {}
+dict_map = {} # Từ điển ma trận nếu xài edges
+
+"""Apply BFS in graph"""
+def bfs(graph, source, sink, parent):
+    visited = [False] * len(graph)  #all vertices are not visited
+    queue = deque([source])
+    visited[source] = True  #visit <source>
+
+    while queue:
+        u = queue.popleft()                      #pick vertex = u from queue
+
+        for v, capacity in enumerate(graph[u]):  #check neighbor of u -> vertex v and edge capacity
+            if not visited[v] and capacity > 0:  #not visited -> available capacity
+                queue.append(v)                  #add v to queue
+                visited[v] = True                #check visit vertex v
+                parent[v] = u                    #set parent of v is u
+                if v == sink:                    #Reach the sink -< full path -> return True
+                    return True
+
+    return False
+
+"""trace back and get path found by BFS"""
+def get_path(parent, source, sink):
+    path = []
+    v = sink
+    while v != source:
+        u = parent[v]
+        path.append((u, v))  #store edge as (u, v)
+        v = u
+    path.reverse()           #reverse to get the path from source to sink
+    return path
+
+def edmonds_karp(capacity_matrix, source, sink):
+    n = len(capacity_matrix)
+    graph = [row[:] for row in capacity_matrix]    #Initial residual graph is the same as capacity matrix
+    parent = [-1] * n                              #store parent to trace back
+    max_flow = 0
+    paths = []                                     #store paths
+
+    #Increase the flow while there is a path from source to sink
+    while bfs(graph, source, sink, parent):
+        # Find the maximum flow through the path by using BFS
+        path_flow = float(-1)
+        v = sink
+        while v != source:
+            u = parent[v]
+            if (path_flow < 0): path_flow = graph[u][v]
+            else: path_flow = min(path_flow, graph[u][v])    #find bottleneck capacity
+            v = u
+
+        # Update residual capacities of the edges and reverse edges along the path
+        v = sink
+        while v != source:
+            u = parent[v]
+            graph[u][v] -= path_flow      #Decrease flow in forward path
+            graph[v][u] += path_flow      #Increase flow in backward path
+            v = u
+
+        #Increase maxflow with the path_flow
+        max_flow += path_flow
+
+        path = get_path(parent, source, sink)
+        paths.append((path, path_flow))    #Store path and its bottleneck flow
+
+    return max_flow, paths
 
 def convert_edges_to_matrix(edges):
+    """Chuyển đổi danh sách các cạnh thành ma trận kề"""
+    # Xây dựng từ điển
     for edge in edges:
         u, v, cap = edge
         if u not in dict_map:
@@ -12,8 +80,10 @@ def convert_edges_to_matrix(edges):
             n = len(dict_map)
             dict_map[v] = n
 
-    length = len(dict_map)
-    capacity = [[0]*length for i in range(length)]
+    length = len(dict_map) # Số điểm trong đồ thị
+    capacity = [[0]*length for i in range(length)] # Khởi tạo ma trận lưu trữ
+    
+    # Tạo ma trận
     for edge in edges:
         u, v, cap = edge
         i = dict_map[u]
@@ -22,15 +92,16 @@ def convert_edges_to_matrix(edges):
     return capacity
 
 def convert_matrix_to_edges(matrix):
-    reversed_dict_map = {v: k for k, v in dict_map.items()}
-    length = len(dict_map)
-    edges = []
+    """Chuyển đổi ma trận thành danh sách các cạnh"""
+    reversed_dict_map = {v: k for k, v in dict_map.items()} # Đảo ngược từ điển
+    length = len(matrix) # Số điểm trong đồ thị
+    edges = [] # Khởi tạo danh sách các cạnh
     
+    # Xây dựng danh sách các cạnh
     for i in range(length):
         for j in range(length):
             if matrix[i][j] > 0:
-                edges.append((reversed_dict_map[i],reversed_dict_map[j],matrix[i][j]))
-    
+                edges.append((i,j,matrix[i][j]))
     return edges
 
 class PushRelabel:
@@ -132,45 +203,47 @@ if __name__ == '__main__':
     capacity = convert_edges_to_matrix(edges)
 
     # Nếu đầu vào là dạng capacity
-    # Tạo ma trận dung lượng ngẫu nhiên cho đồ thị với các cạnh có dung lượng từ 0 đến 20
-    '''capacity = [[0 if i == j else random.randint(0, 20) for j in range(n)] for i in range(n)]
+    """Tạo ma trận dung lượng ngẫu nhiên cho đồ thị với các cạnh có dung lượng từ 0 đến 20"""
+    # capacity = [[0 if i == j else random.randint(0, 20) for j in range(n)] for i in range(n)]
     capacity = [
-        [0, 15, 14, 12, 10, 17],
-        [20, 0, 1, 0, 10, 18],
-        [18, 14, 0, 6, 9, 19],
-        [19, 14, 20, 0, 7, 5],
-        [9, 5, 17, 4, 0, 10],
-        [12, 5, 18, 11, 19, 0]
-    ]'''
-
-    # Hiển thị ma trận dung lượng
-    print("Capacity Matrix:")
-    for row in capacity:
-        print(row)
-
+        [0, 4, 5, 2, 0, 0, 8],
+        [0, 0, 7, 3, 6, 0, 0],
+        [0, 0, 0, 6, 8, 4, 6],
+        [0, 0, 0, 0, 6, 5, 3],
+        [0, 0, 0, 0, 0, 2, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0]
+    ]
+    
     import pickle
     with open('database/maximum_flow_data.pickle', 'rb') as f:
         loaded_data = pickle.load(f)
     capacity = loaded_data['adj_matrix']
     n = len(capacity)
-    source = 4
-    sink = 2
-        
+    source = 162
+    sink = 135
     pr = PushRelabel(n, source, sink, capacity)
     
     # In ra ma trận dòng chảy
     print("Flow Matrix:")
     flow =  pr.max_flow()
-    for row in flow:
-        print(row)
+    # for row in flow:
+    #     print(row)
 
     # Tổng lưu lượng là tổng lưu lượng từ nguồn đến các đỉnh kề
     max_flow = sum(flow[source][v] for v in range(n))
     print("Maximum Flow:", max_flow)
     
     # In ra ma trận đường đi
-    for i in range(n):
-        for j in range(n):
-            if flow[i][j] > 0:
-                print(f"({i} -> {j}): {flow[i][j]}")
+    # for i in range(n):
+    #     for j in range(n):
+    #         if flow[i][j] > 0:
+    #             print(f"({i} -> {j}): {flow[i][j]}")
     print("Flow edges: ", convert_matrix_to_edges(flow))
+    
+    # Tìm các đường đi
+    max_flow, paths = edmonds_karp(flow, source, sink)
+
+    print("\nAugmenting paths found:")
+    for i, (path, flow) in enumerate(paths, 1):
+        print(f"Path {i}: {' -> '.join(f'{u}->{v}' for u, v in path)} with flow {flow}")
