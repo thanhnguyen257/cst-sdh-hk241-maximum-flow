@@ -6,6 +6,7 @@ import random
 import time
 from algorithms.push_relabel_v2 import PushRelabel
 from algorithms.edmond_karp_v3 import EdmondsKarp
+from algorithms.ford_fulkerson import ford_fulkerson
 
 app = Flask(__name__)
 with open('database/maximum_flow_data.pickle', 'rb') as f:
@@ -241,9 +242,8 @@ def get_map():
     elif algorithm == "2":
         map_type = "ford_fulkerson"
         start_time = time.perf_counter()
+        max_flow, paths = ford_fulkerson(capacity_matrix, start, destination)
         end_time = time.perf_counter()
-        max_flow = None
-        paths = None
     
     maximum_flow = max_flow
     runtime = end_time - start_time
