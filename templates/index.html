@@ -5,23 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maximum Flow Algorithm</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <style>
-        .path-container {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-        }
-        .path-color {
-            width: 50px;
-            height: 50px;
-            margin-right: 10px;
-            cursor: pointer;
-        }
-        .path-name {
-            font-size: 18px;
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -58,8 +41,9 @@
                     </div>
                 </div>
             </div>
-            <div id="path-container"></div>
         </div>
+
+        <div id="path-container"></div>
 
         <div id="map-container">
             <iframe id="map-frame" src="static/default_map.html" width="100%" height="100%" style="border: none;" allowfullscreen></iframe>

@@ -47,6 +47,9 @@ function populateOptions() {
                 opt.value = idx++;
                 algorithmSelect.appendChild(opt);
             });
+            document.getElementById('start').value = 2;
+            document.getElementById('destination').value = 1;
+            document.getElementById('algorithm').value = 1;
         });
 }
 window.onload = populateOptions;
@@ -78,14 +81,19 @@ async function getMap(reset) {
         sorted_path.forEach(([path, color]) => {
             const boxContainer = document.createElement('div');
             boxContainer.className = 'path-container';
+            boxContainer.style.margin = '0';
 
             const pathColor = document.createElement('div');
             pathColor.className = 'path-color';
-            pathColor.style.backgroundColor = color;
+            pathColor.style.backgroundColor = data.color_path[path];
+            pathColor.style.width = '20px';
+            pathColor.style.height = '20px';;
+            pathColor.style.borderRadius = '50%';
             pathColor.onclick = getMap_static(path);
 
             const pathName = document.createElement('span');
             pathName.className = 'path-name';
+            pathName.style.color = '#333';
             if (path === '0') {
                 pathName.innerText = 'Full path';
             } else {

@@ -11,6 +11,45 @@ body {
 .container {
     position: relative;
     height: 100vh;
+    overflow: hidden;
+}
+
+#path-container {
+    position: absolute;
+    border-radius: 6px;
+    right: 20px;
+    bottom: 20px;
+    background-color: #07080778;
+    max-width: 14rem;
+    max-height: 14rem;
+    overflow: hidden auto;
+    padding: 0 20px;
+}
+
+#path-container .path-container {
+    margin: 10px 0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background-color: #f0f8ff;
+}
+
+#path-container .path-container .path-color {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #07080778;
+    border-radius: 10px;
+    margin-right: 4px;
+}
+
+#path-container .path-container .path-name {
+    flex-grow: 1;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .form-container {
@@ -19,6 +58,8 @@ body {
     left: 0;
     right: 0;
     height: auto;
+    min-width: 50vw;
+    max-width: 70vw;
     margin: 0.85rem 14rem 14rem;
     padding: 6px 10px 0 10px;
     background-color: #07080778;
@@ -76,6 +117,14 @@ body {
     word-wrap: break-word;
     white-space: normal;
     border-radius: 6px;
+}
+
+.form-container .wrapper .utils #algorithm {
+    width: 100%;
+}
+
+.form-container .wrapper .utils .data {
+    margin-top: 20px;
 }
 
 #map-container {
