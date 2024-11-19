@@ -4,4 +4,5 @@
 /database/*
 !database/convert_dataset.ipynb
 !database/maximum_flow_data.pickle
+!database/maximum_flow_data.xlsx
 __pycache__/

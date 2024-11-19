@@ -65,12 +65,12 @@ def draw_map(map_type, nodes=None, edges=None):
                     edge_info[edge][i] = max_flow
 
                 if i in min_edge_path_each:
-                    if min_edge_path_each[i][1] > edge_dict[edge]['weight']:
-                        min_edge_path_each[i] = ({edge}, edge_dict[edge]['weight'])
-                    elif min_edge_path_each[i][1] == edge_dict[edge]['weight']:
+                    if min_edge_path_each[i][1] > edge_dict[edge]['capacity']:
+                        min_edge_path_each[i] = ({edge}, edge_dict[edge]['capacity'])
+                    elif min_edge_path_each[i][1] == edge_dict[edge]['capacity']:
                         min_edge_path_each[i][0].add(edge)
                 else:
-                    min_edge_path_each[i] = ({edge}, edge_dict[edge]['weight'])
+                    min_edge_path_each[i] = ({edge}, edge_dict[edge]['capacity'])
         
         # Find min capacity edge each path that only in one path
         for i, paths in enumerate(edges,1):
@@ -78,12 +78,12 @@ def draw_map(map_type, nodes=None, edges=None):
                 if len(edge_info[edge]) > 1:
                     continue
                 if i in min_edge_path_full:
-                    if min_edge_path_full[i][1] > edge_dict[edge]['weight']:
-                        min_edge_path_full[i] = ({edge}, edge_dict[edge]['weight'])
-                    elif min_edge_path_full[i][1] == edge_dict[edge]['weight']:
+                    if min_edge_path_full[i][1] > edge_dict[edge]['capacity']:
+                        min_edge_path_full[i] = ({edge}, edge_dict[edge]['capacity'])
+                    elif min_edge_path_full[i][1] == edge_dict[edge]['capacity']:
                         min_edge_path_full[i][0].add(edge)
                 else:
-                    min_edge_path_full[i] = ({edge}, edge_dict[edge]['weight'])
+                    min_edge_path_full[i] = ({edge}, edge_dict[edge]['capacity'])
 
         # Add edge line to each path map and edge line that only in one path to full map
         color_path = {0:'#FFFFFF'}
@@ -108,7 +108,7 @@ def draw_map(map_type, nodes=None, edges=None):
                 )
                 map_path_each.add_child(arrows)
 
-                popup_str = f"{edge_dict[edge]['name']}:{edge_dict[edge]['weight']}"
+                popup_str = f"{edge_dict[edge]['name']}:{edge_dict[edge]['capacity']}"
                 popup_str += f"<br>Path {i}: {max_flow}"
                 popup = folium.Popup(popup_str, max_width=300)
                 line.add_child(popup)
@@ -154,7 +154,7 @@ def draw_map(map_type, nodes=None, edges=None):
             )
             map_instance.add_child(arrows)
 
-            popup_str = f"{edge_dict[edge]['name']}:{edge_dict[edge]['weight']}"
+            popup_str = f"{edge_dict[edge]['name']}:{edge_dict[edge]['capacity']}"
             for i in sorted(edge_info[edge].keys()):
                 popup_str += f"<br>Path {i}: {edge_info[edge][i]}"
             popup = folium.Popup(popup_str, max_width=300)
