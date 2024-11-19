@@ -6,6 +6,7 @@ import random
 import time
 from algorithms.push_relabel_v2 import PushRelabel
 from algorithms.edmond_karp_v3 import EdmondsKarp
+from algorithms.fork_fulkerson_v1 import ForkFulkerson
 
 app = Flask(__name__)
 with open('database/maximum_flow_data.pickle', 'rb') as f:
@@ -15,6 +16,29 @@ edge_dict = loaded_data['df_edge_dict']
 maximum_flow = 0
 runtime = 0
 color_path = {0:'#FFFFFF'}
+
+def add_return_edges(edge_dict):
+    new_edges = {}
+
+    for key, value in edge_dict.items():
+        start, end = key
+        return_edge_key = (end, start)
+
+        if return_edge_key not in edge_dict and return_edge_key not in new_edges:
+            return_edge = {
+                'start': end,
+                'end': start,
+                'capacity': value['capacity'],
+                'name': f'{value['name']} (WRONG WAYS)',
+                'node_coordinate': value['node_coordinate'][::-1],
+                'color': '#000000',
+            }
+            new_edges[return_edge_key] = return_edge
+
+    edge_dict.update(new_edges)
+    return edge_dict
+
+add_return_edges(edge_dict=edge_dict)
 
 def initialize_map(nodes=None):
     map_instance = folium.Map(location=(10.799306, 106.678383), zoom_start=13)
@@ -93,6 +117,7 @@ def draw_map(map_type, nodes=None, edges=None):
             color_path[i] = color
             for edge in paths[0]:
                 edge_color = "#FF0000" if edge in min_edge_path_each[i][0] else color
+                edge_color = edge_dict[edge]["color"] if "color" in edge_dict[edge] else edge_color
                 line = folium.PolyLine(edge_dict[edge]['node_coordinate']
                                     , color=edge_color
                                     , weight=10
@@ -115,6 +140,7 @@ def draw_map(map_type, nodes=None, edges=None):
 
                 if len(edge_info[edge]) == 1:
                     edge_color = "#FF0000" if edge in min_edge_path_full[i][0] else color
+                    edge_color = edge_dict[edge]["color"] if "color" in edge_dict[edge] else edge_color
                     line = folium.PolyLine(edge_dict[edge]['node_coordinate']
                                         , color=edge_color
                                         , weight=10
@@ -139,6 +165,7 @@ def draw_map(map_type, nodes=None, edges=None):
             if len(edge_info[edge]) == 1:
                 continue
             edge_color = "#FFFF00"
+            edge_color = edge_dict[edge]["color"] if "color" in edge_dict[edge] else edge_color
             line = folium.PolyLine(edge_dict[edge]['node_coordinate']
                                 , color=edge_color
                                 , weight=10
@@ -199,8 +226,8 @@ def get_map():
         pushrelabel = PushRelabel(len(capacity_matrix), start, destination, capacity_matrix)
         start_time = time.perf_counter()
         flow =  pushrelabel.max_flow()
-        max_flow, paths = pushrelabel.edmonds_karp(flow, start, destination)
         end_time = time.perf_counter()
+        max_flow, paths = pushrelabel.edmonds_karp(flow, start, destination)
     elif algorithm == "1":
         map_type = "edmond_karp"
         edmonds_karp = EdmondsKarp()
@@ -209,8 +236,9 @@ def get_map():
         end_time = time.perf_counter()
     elif algorithm == "2":
         map_type = "ford_fulkerson"
+        forkfulkerson = ForkFulkerson()
         start_time = time.perf_counter()
-        max_flow, paths = 0, None
+        max_flow, paths = forkfulkerson.run_fork_fulkerson(capacity_matrix, start, destination)
         end_time = time.perf_counter()
     
     maximum_flow = max_flow
