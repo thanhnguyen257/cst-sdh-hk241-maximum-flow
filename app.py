@@ -218,7 +218,7 @@ def get_map():
     destination = int(request.args.get('destination'))
     algorithm = request.args.get('algorithm')
 
-    capacity_matrix = loaded_data['adj_matrix'].copy()
+    capacity_matrix = loaded_data['capacity_adj_matrix'].copy()
     global maximum_flow, runtime
     
     if algorithm == "0":
