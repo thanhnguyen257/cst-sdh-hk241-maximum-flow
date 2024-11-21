@@ -66,6 +66,7 @@ async function getMap(reset) {
         const start = document.getElementById('start')?.value;
         const destination = document.getElementById('destination')?.value;
         const algorithm = document.getElementById('algorithm')?.value;
+        const apply_sp = document.getElementById('apply_sp').checked ? 1 : 0;
 
         if (!start || start === "-1" || 
             !destination || destination === "-1" || 
@@ -75,7 +76,7 @@ async function getMap(reset) {
         }
 
         const mapFrame = document.getElementById('map-frame');
-        mapFrame.src = `/get_map?start=${start}&destination=${destination}&algorithm=${algorithm}`;
+        mapFrame.src = `/get_map?start=${start}&destination=${destination}&algorithm=${algorithm}&apply_sp=${apply_sp}`;
 
         await new Promise((resolve) => {
             mapFrame.onload = resolve;
@@ -106,8 +107,10 @@ async function getMap(reset) {
             const pathName = document.createElement('span');
             pathName.className = 'path-name';
             pathName.style.color = '#333';
-            if (path === '0') {
+            if (path === '-1') {
                 pathName.innerText = 'Full path';
+            } else if (path === '0') {
+                pathName.innerText = 'Shortest path';
             } else {
                 pathName.innerText = 'Path ' + path;
             }

@@ -7,6 +7,7 @@ import time
 from algorithms.push_relabel_v2 import PushRelabel
 from algorithms.edmond_karp_v3 import EdmondsKarp
 from algorithms.fork_fulkerson_v1 import ForkFulkerson
+from algorithms.successive_shortest_path import SuccessiveShortestPath, create_graph_from_matrices, dijkstra_shortest_path
 
 app = Flask(__name__)
 with open('database/maximum_flow_data.pickle', 'rb') as f:
@@ -15,7 +16,9 @@ node_dict = loaded_data['df_node_dict']
 edge_dict = loaded_data['df_edge_dict']
 maximum_flow = 0
 runtime = 0
-color_path = {0:'#FFFFFF'}
+color_path = {-1:'#FFFFFF'}
+shortest_path = set()
+apply_sp = 0
 
 def add_return_edges(edge_dict):
     new_edges = {}
@@ -29,7 +32,7 @@ def add_return_edges(edge_dict):
                 'start': end,
                 'end': start,
                 'capacity': value['capacity'],
-                'name': f'{value['name']} (WRONG WAYS)',
+                'name': f'(WRONG WAYS) {value['name']}',
                 'node_coordinate': value['node_coordinate'][::-1],
                 'color': '#000000',
             }
@@ -62,13 +65,40 @@ def draw_map(map_type, nodes=None, edges=None):
         #     folium.PolyLine(edge_dict[edge_id]['node_coordinate'], color="blue", weight=10, opacity=0.7).add_to(map_instance)
 
         map_instance.save("static/default_map.html")
+
+    elif map_type == "shortest_path":
+        edge_color = "#00FF00"
+        for edge in shortest_path:
+            line = folium.PolyLine(edge_dict[edge]['node_coordinate']
+                                , color=edge_color
+                                , weight=10
+                                , opacity=0.7).add_to(map_instance)
+            
+            arrows = PolyLineTextPath(
+                line,
+                '   ➤   ',
+                repeat=True,
+                offset=0,
+                attributes={'fill':edge_color
+                            , 'font-size':'30'}
+            )
+            map_instance.add_child(arrows)
+
+            popup_str = f"(SHORTEST PATH) {edge_dict[edge]['name']}:{edge_dict[edge]['capacity']}"
+            popup = folium.Popup(popup_str, max_width=300)
+            line.add_child(popup)
+            map_instance.save("maps/map_shortest_path.html")
+
     elif map_type != "default" and edges is not None:
 
         def generate_random_color(number_of_path):
             colors = set()
             while len(colors) < number_of_path:
                 color = (int(random.random() * 255), int(random.random() * 255), int(random.random() * 255))
-                if color != (255, 255, 255) and color != (255, 255, 0) and color != (255, 0, 0):
+                if color != (255, 255, 255)\
+                    and color != (255, 255, 0)\
+                    and color != (255, 0, 0)\
+                    and color != (0, 255, 0):
                     colors.add('#{:02x}{:02x}{:02x}'.format(*color))
             return list(colors)
         
@@ -110,7 +140,11 @@ def draw_map(map_type, nodes=None, edges=None):
                     min_edge_path_full[i] = ({edge}, edge_dict[edge]['capacity'])
 
         # Add edge line to each path map and edge line that only in one path to full map
-        color_path = {0:'#FFFFFF'}
+        if apply_sp:
+            color_path = {-1:'#FFFFFF',0:'#00FF00'}
+        else:
+            color_path = {-1:'#FFFFFF'}
+
         for i, (paths, color) in enumerate(zip(edges, colors),1):
             max_flow = paths[1]
             map_path_each = initialize_map(nodes=nodes)
@@ -141,6 +175,9 @@ def draw_map(map_type, nodes=None, edges=None):
                 if len(edge_info[edge]) == 1:
                     edge_color = "#FF0000" if edge in min_edge_path_full[i][0] else color
                     edge_color = edge_dict[edge]["color"] if "color" in edge_dict[edge] else edge_color
+
+                    edge_color, is_shortest_path = ("#00FF00", "(SHORTEST PATH) ") if edge in shortest_path and apply_sp else (edge_color, "")
+                    
                     line = folium.PolyLine(edge_dict[edge]['node_coordinate']
                                         , color=edge_color
                                         , weight=10
@@ -155,7 +192,7 @@ def draw_map(map_type, nodes=None, edges=None):
                                     , 'font-size':'30'}
                     )
                     map_instance.add_child(arrows)
-                    popup = folium.Popup(popup_str, max_width=300)
+                    popup = folium.Popup(f"{is_shortest_path}{popup_str}", max_width=300)
                     line.add_child(popup)
 
             map_path_each.save(f"maps/map_{i}.html")
@@ -166,6 +203,7 @@ def draw_map(map_type, nodes=None, edges=None):
                 continue
             edge_color = "#FFFF00"
             edge_color = edge_dict[edge]["color"] if "color" in edge_dict[edge] else edge_color
+            edge_color, is_shortest_path = ("#00FF00", "(SHORTEST PATH) ") if edge in shortest_path and apply_sp else (edge_color, "")
             line = folium.PolyLine(edge_dict[edge]['node_coordinate']
                                 , color=edge_color
                                 , weight=10
@@ -181,11 +219,34 @@ def draw_map(map_type, nodes=None, edges=None):
             )
             map_instance.add_child(arrows)
 
-            popup_str = f"{edge_dict[edge]['name']}:{edge_dict[edge]['capacity']}"
+            popup_str = f"{is_shortest_path}{edge_dict[edge]['name']}:{edge_dict[edge]['capacity']}"
             for i in sorted(edge_info[edge].keys()):
                 popup_str += f"<br>Path {i}: {edge_info[edge][i]}"
             popup = folium.Popup(popup_str, max_width=300)
             line.add_child(popup)
+        
+        if apply_sp:
+            for edge in shortest_path:
+                if edge not in edge_info:
+                    edge_color, is_shortest_path = ("#00FF00", "(SHORTEST PATH) ")
+                    line = folium.PolyLine(edge_dict[edge]['node_coordinate']
+                                        , color=edge_color
+                                        , weight=10
+                                        , opacity=0.7).add_to(map_instance)
+                    
+                    arrows = PolyLineTextPath(
+                        line,
+                        '   ➤   ',
+                        repeat=True,
+                        offset=0,
+                        attributes={'fill':edge_color
+                                    , 'font-size':'30'}
+                    )
+                    map_instance.add_child(arrows)
+
+                    popup_str = f"{is_shortest_path}{edge_dict[edge]['name']}:{edge_dict[edge]['capacity']}"
+                    popup = folium.Popup(popup_str, max_width=300)
+                    line.add_child(popup)
 
     map_instance.save("maps/map_full.html")
 
@@ -200,7 +261,7 @@ def get_options():
     data = {
         'start': [node_dict[i]['name'] for i in range(len(node_dict))],
         'destination': [node_dict[i]['name'] for i in range(len(node_dict))],
-        'algorithm': ['Push–Relabel','Edmonds–Karp','Ford–Fulkerson']
+        'algorithm': ['Push-Relabel','Edmonds-Karp','Ford-Fulkerson','Successive Shortest Path']
     }
     return jsonify(data)
 
@@ -209,18 +270,35 @@ def get_map():
     map_id = request.args.get('map_id')
     
     if map_id is not None:
-        if  map_id == "0":
+        if  map_id == "-1":
             return send_from_directory('maps', 'map_full.html')
+        elif map_id == "0":
+            return send_from_directory('maps', 'map_shortest_path.html')
         else:
             return send_from_directory('maps', f'map_{map_id}.html')
     
+    global maximum_flow, runtime, shortest_path, apply_sp
+
     start = int(request.args.get('start'))
     destination = int(request.args.get('destination'))
     algorithm = request.args.get('algorithm')
+    apply_sp = int(request.args.get('apply_sp'))
 
     capacity_matrix = loaded_data['capacity_adj_matrix'].copy()
-    global maximum_flow, runtime
-    
+    cost_matrix = loaded_data['cost_adj_matrix'].copy()
+
+    if apply_sp:
+        parent, _ = dijkstra_shortest_path(loaded_data['cost_adj_matrix'].copy(), start)
+        shortest_path = set()
+        if parent[destination] is not None:
+            node = destination
+            while node != start:
+                shortest_path.add((parent[node], node))
+                node = parent[node]
+        if shortest_path:
+            draw_map(map_type="shortest_path", nodes=(start,destination))
+
+
     if algorithm == "0":
         map_type = "push_relabel"
         pushrelabel = PushRelabel(len(capacity_matrix), start, destination, capacity_matrix)
@@ -239,6 +317,17 @@ def get_map():
         forkfulkerson = ForkFulkerson()
         start_time = time.perf_counter()
         max_flow, paths = forkfulkerson.run_fork_fulkerson(capacity_matrix, start, destination)
+        end_time = time.perf_counter()
+    elif algorithm == "3":
+        map_type = "ssp"
+        n = capacity_matrix.shape[0]
+        supply = {i: 0 for i in range(n)}
+        supply[start] = float('inf')
+        supply[destination] = -float('inf')
+        G = create_graph_from_matrices(capacity_matrix, cost_matrix)
+        ssp = SuccessiveShortestPath()
+        start_time = time.perf_counter()
+        paths, max_flow = ssp.ssp_min_cost_flow(G, supply, start, destination)
         end_time = time.perf_counter()
     
     maximum_flow = max_flow
