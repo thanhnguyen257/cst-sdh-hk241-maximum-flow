@@ -107,10 +107,12 @@ async function getMap(reset) {
             const pathName = document.createElement('span');
             pathName.className = 'path-name';
             pathName.style.color = '#333';
-            if (path === '-1') {
+            if (path === '-2') {
                 pathName.innerText = 'Full path';
-            } else if (path === '0') {
+            } else if (path === '-1') {
                 pathName.innerText = 'Shortest path';
+            } else if (path === '0') {
+                pathName.innerText = 'Full Push-Relabel';
             } else {
                 pathName.innerText = 'Path ' + path;
             }

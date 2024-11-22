@@ -16,7 +16,7 @@ node_dict = loaded_data['df_node_dict']
 edge_dict = loaded_data['df_edge_dict']
 maximum_flow = 0
 runtime = 0
-color_path = {-1:'#FFFFFF'}
+color_path = {-2:'#FFFFFF'}
 shortest_path = set()
 apply_sp = 0
 
@@ -89,7 +89,35 @@ def draw_map(map_type, nodes=None, edges=None):
             line.add_child(popup)
             map_instance.save("maps/map_shortest_path.html")
 
-    elif map_type != "default" and edges is not None:
+    elif map_type == "push_relabel_full" and edges is not None:
+        edge_color = "#0000FF"
+        edge_info = dict()
+        for i in range(len(edges)):
+            for j in range(len(edges)):
+                if edges[i][j] > 0:
+                    edge_info[(i,j)] = edges[i][j]
+                
+        for edge in edge_info:
+            line = folium.PolyLine(edge_dict[edge]['node_coordinate']
+                                , color=edge_color
+                                , weight=10
+                                , opacity=0.7).add_to(map_instance)
+            
+            arrows = PolyLineTextPath(
+                line,
+                '   ➤   ',
+                repeat=True,
+                offset=0,
+                attributes={'fill':edge_color
+                            , 'font-size':'30'}
+            )
+            map_instance.add_child(arrows)
+
+            popup_str = f"{edge_dict[edge]['name']}: {edge_info[edge]} / {edge_dict[edge]['capacity']}"
+            popup = folium.Popup(popup_str, max_width=300)
+            line.add_child(popup)
+            map_instance.save("maps/full_push_relabel_map.html")
+    elif edges is not None:
 
         def generate_random_color(number_of_path):
             colors = set()
@@ -98,7 +126,8 @@ def draw_map(map_type, nodes=None, edges=None):
                 if color != (255, 255, 255)\
                     and color != (255, 255, 0)\
                     and color != (255, 0, 0)\
-                    and color != (0, 255, 0):
+                    and color != (0, 255, 0)\
+                    and color != (0, 0, 255):
                     colors.add('#{:02x}{:02x}{:02x}'.format(*color))
             return list(colors)
         
@@ -141,9 +170,9 @@ def draw_map(map_type, nodes=None, edges=None):
 
         # Add edge line to each path map and edge line that only in one path to full map
         if apply_sp:
-            color_path = {-1:'#FFFFFF',0:'#00FF00'}
+            color_path = {-2:'#FFFFFF',-1:'#00FF00'}
         else:
-            color_path = {-1:'#FFFFFF'}
+            color_path = {-2:'#FFFFFF'}
 
         for i, (paths, color) in enumerate(zip(edges, colors),1):
             max_flow = paths[1]
@@ -270,14 +299,16 @@ def get_map():
     map_id = request.args.get('map_id')
     
     if map_id is not None:
-        if  map_id == "-1":
+        if  map_id == "-2":
             return send_from_directory('maps', 'map_full.html')
-        elif map_id == "0":
+        elif map_id == "-1":
             return send_from_directory('maps', 'map_shortest_path.html')
+        elif map_id == "0":
+            return send_from_directory('maps', 'full_push_relabel_map.html')
         else:
             return send_from_directory('maps', f'map_{map_id}.html')
     
-    global maximum_flow, runtime, shortest_path, apply_sp
+    global maximum_flow, runtime, shortest_path, apply_sp, color_path
 
     start = int(request.args.get('start'))
     destination = int(request.args.get('destination'))
@@ -306,6 +337,8 @@ def get_map():
         flow =  pushrelabel.max_flow()
         end_time = time.perf_counter()
         max_flow, paths = pushrelabel.edmonds_karp(flow, start, destination)
+        if flow:
+            draw_map(map_type="push_relabel_full", nodes=(start,destination), edges=flow)
     elif algorithm == "1":
         map_type = "edmond_karp"
         edmonds_karp = EdmondsKarp()
@@ -333,6 +366,8 @@ def get_map():
     maximum_flow = max_flow
     runtime = end_time - start_time
     draw_map(map_type=map_type, nodes=(start,destination), edges=paths)
+    if algorithm == "0":
+        color_path[0] = "#0000FF"
     return send_from_directory('maps', 'map_full.html')
 
 @app.route('/get_data')
